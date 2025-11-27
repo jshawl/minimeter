@@ -5,6 +5,5 @@ import (
 )
 
 func main() {
-	handler := server.NewServer()
-	server.ListenAndServe(handler)
+	server.ListenAndServe()
 }

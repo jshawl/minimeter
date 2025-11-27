@@ -14,12 +14,16 @@ func TestHandleGetApiMetrics(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/metrics", nil)
 	w := httptest.NewRecorder()
 
-	server.HandleGetApiMetrics(w, req)
+	db, _ := db.NewDB(t.TempDir() + "/test.db")
+	db.Measure("test_metric", 42)
+	handler := server.HandleGetApiMetrics(db)
+
+	handler(w, req)
 
 	body := w.Body.String()
 
-	if body != `{"ok": 1}` {
-		t.Errorf("got %s, want {\"ok\": 1}", body)
+	if !strings.Contains(body, "test_metric") {
+		t.Errorf("got %s, want test_metric", body)
 	}
 }
 
