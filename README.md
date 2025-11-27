@@ -1,5 +1,13 @@
 # minimeter
 
+## Install
+
+```
+docker run --rm -v minimeter-data:/app/data -p 8080:8080 ghcr.io/jshawl/minimeter:main
+```
+
+## Usage
+
 POST /api/measure
 
 ```json
@@ -8,8 +16,6 @@ POST /api/measure
   "value": 234
 }
 ```
-
-value is optional, defaults to 1.
 
 GET /api/metrics
 
