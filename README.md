@@ -17,6 +17,8 @@ POST /api/measure
 }
 ```
 
+`value` is optional. Defaults to `1`.
+
 GET /api/metrics
 
 ```json

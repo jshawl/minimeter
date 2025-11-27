@@ -47,3 +47,24 @@ func TestHandlerPostApiMeasure_EnqueuesJob(t *testing.T) {
 		t.Fatal("expected job to be enqueued, but channel was empty")
 	}
 }
+
+func TestHandlerPostApiMeasure_EnqueuesJobWithDefaults(t *testing.T) {
+	jobs := make(chan db.Measurement, 1)
+	w := httptest.NewRecorder()
+	handler := server.HandlePostApiMeasure(jobs)
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/metrics",
+		strings.NewReader(`{"name": "test_metric"}`),
+	)
+	req.Header.Set("Content-Type", "application/json")
+	handler(w, req)
+	select {
+	case job := <-jobs:
+		if job.Name != "test_metric" || job.Value != 1 {
+			t.Fatalf("unexpected job: %+v", job)
+		}
+	default:
+		t.Fatal("expected job to be enqueued, but channel was empty")
+	}
+}
