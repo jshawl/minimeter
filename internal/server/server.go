@@ -55,7 +55,7 @@ func NewServer() (http.Handler, db.Model) {
 
 	jobs := make(chan db.Measurement, 50_000)
 
-	db, err := db.NewDB("minimeter.db")
+	db, err := db.NewDB(os.Getenv("DB_PATH") + "minimeter.db")
 	if err != nil {
 		log.Fatal(err)
 	}
