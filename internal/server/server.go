@@ -51,7 +51,7 @@ func NewServer() http.Handler {
 	if err != nil {
 		log.Fatal(err)
 	}
-	StartMeasurementWorker(db, jobs)
+	db.StartMeasurementWorker(jobs)
 	mux.HandleFunc("/api/metrics", HandleGetApiMetrics)
 	mux.HandleFunc("/api/measure", HandlePostApiMeasure(jobs))
 
@@ -62,15 +62,4 @@ func ListenAndServe(handler http.Handler) {
 	port := ":8080"
 	log.Printf("Starting server on %s", port)
 	log.Fatal(http.ListenAndServe(port, handler))
-}
-
-func StartMeasurementWorker(model db.Model, jobs <-chan db.Measurement) {
-	go func() {
-		for job := range jobs {
-			_, err := model.Measure(job.Name, job.Value)
-			if err != nil {
-				log.Printf("metric insert failed: %v", err)
-			}
-		}
-	}()
 }

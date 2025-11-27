@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"log"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -76,6 +77,17 @@ type Measurement struct {
 	Name      string
 	Value     float64
 	Timestamp int64
+}
+
+func (model Model) StartMeasurementWorker(jobs <-chan Measurement) {
+	go func() {
+		for job := range jobs {
+			_, err := model.Measure(job.Name, job.Value)
+			if err != nil {
+				log.Printf("metric insert failed: %v", err)
+			}
+		}
+	}()
 }
 
 func (model Model) GetMeasurements(name string) ([]Measurement, error) {
