@@ -25,7 +25,7 @@ func NewDB(path string) (Model, error) {
 			name text not null,
 			value real not null default 1
 		);
-		CREATE INDEX if not exists idx_measurements_name_timestamp ON measurements(name, timestamp DESC)
+		CREATE INDEX if not exists idx_measurements_name_timestamp ON measurements(name, timestamp DESC);
 	`
 
 	_, err = database.ExecContext(context.Background(), sqlStmt)
