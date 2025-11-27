@@ -39,6 +39,10 @@ func HandlePostApiMeasure(jobs chan<- db.Measurement) http.HandlerFunc {
 			return
 		}
 
+		if measurement.Value == 0 {
+			measurement.Value = 1
+		}
+
 		select {
 		case jobs <- measurement:
 			// queued successfully
