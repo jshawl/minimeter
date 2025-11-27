@@ -79,6 +79,15 @@ type Measurement struct {
 	Timestamp int64
 }
 
+type MetricSummary struct {
+	Name  string `json:"name"`
+	Count int64  `json:"count"`
+	Sum   int64  `json:"sum"`
+	Avg   int64  `json:"avg"`
+	Min   int64  `json:"min"`
+	Max   int64  `json:"max"`
+}
+
 func (model Model) StartMeasurementWorker(jobs <-chan Measurement) {
 	go func() {
 		for job := range jobs {
@@ -90,7 +99,7 @@ func (model Model) StartMeasurementWorker(jobs <-chan Measurement) {
 	}()
 }
 
-func (model Model) GetMeasurements(name string) ([]Measurement, error) {
+func (model Model) GetMeasurements() ([]MetricSummary, error) {
 	tx, err := model.db.BeginTx(
 		context.Background(),
 		&sql.TxOptions{ReadOnly: true},
@@ -100,7 +109,16 @@ func (model Model) GetMeasurements(name string) ([]Measurement, error) {
 	}
 	defer tx.Rollback()
 
-	query := "select id, name, value, timestamp from measurements where name = ?"
+	query := `SELECT 
+				name,
+				COUNT(*),
+				SUM(value),
+				AVG(value),
+				MIN(value),
+				MAX(value)
+				FROM measurements
+				WHERE timestamp > (?)
+				GROUP BY name`
 
 	stmt, err := tx.PrepareContext(
 		context.Background(),
@@ -111,17 +129,18 @@ func (model Model) GetMeasurements(name string) ([]Measurement, error) {
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.QueryContext(context.Background(), name)
+	oneWeekAgo := time.Now().Add(-7 * 24 * time.Hour).UnixMilli()
+	rows, err := stmt.QueryContext(context.Background(), oneWeekAgo)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var results []Measurement
+	results := []MetricSummary{}
 
 	for rows.Next() {
-		var m Measurement
-		if err := rows.Scan(&m.ID, &m.Name, &m.Value, &m.Timestamp); err != nil {
+		var m MetricSummary
+		if err := rows.Scan(&m.Name, &m.Count, &m.Sum, &m.Avg, &m.Min, &m.Max); err != nil {
 			return nil, err
 		}
 		results = append(results, m)
@@ -136,4 +155,8 @@ func (model Model) GetMeasurements(name string) ([]Measurement, error) {
 	}
 
 	return results, nil
+}
+
+func (db Model) Close() {
+	db.db.Close()
 }
